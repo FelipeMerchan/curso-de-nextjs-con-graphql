@@ -1,3 +1,5 @@
+import axios from 'axios'
+import { useQuery } from 'react-query'
 import React, { useEffect, useState } from 'react'
 import Layout from '@components/Layout/Layout'
 import { Card } from 'semantic-ui-react'
@@ -22,49 +24,26 @@ const query = `
   }
 `
 
-const baseURL = process.env.NEXT_PUBLIC_SERVICE_URL || 'http://localhost:4000'
-console.log(process.env.NEXT_PUBLIC_SERVICE_URL)
+const baseUrl = process.env.NEXT_PUBLIC_SERVICE_URL || 'http://localhost:4000'
 
-const requester = (endpoint?: string, data?: Record<string, number | string>) =>
-  fetch(`${baseURL}${endpoint}`,{
-    method:'POST',
-    headers: {
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
+const requester = axios.create({
+  baseURL: baseUrl,
+  headers: {
+    'content-type': 'application/json'
+  },
+})
 
 const useAvocados = () => {
-  const [data, setData] = useState<TProduct[]>([])
-  const [status, setStatus] = useState<'success'| 'loading' | 'error' | 'idle'>('idle')
-
-  useEffect(()=>{
-    const fetchItems = async () => {
-      setStatus('loading')
-      try {
-        const response = await requester('/graphql', { query })
-
-        const { data } = (await response.json()) as { data: TProduct[]}
-        setData(data)
-        setStatus('success')
-      } catch (error) {
-        setStatus('error')
-      }
-    }
-    fetchItems()
-  }, [])
-
-  return {
-    data,
-    status
-  }
-
+  return useQuery('avocados', async () => {
+    const response = await requester.post<{ data: TProduct[]}>('/graphql', { query })
+    return response.data.data
+  })
 }
 
 const HomePage = () => {
   const { data, status } = useAvocados()
 
-  console.log(data)
+  console.log({ data, status })
 
   return (
     <Layout title="Home">
