@@ -1,9 +1,71 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '@components/Layout/Layout'
 import { Card } from 'semantic-ui-react'
 import KawaiiHeader from '@components/KawaiiHeader/KawaiiHeader'
 
+const query = `
+  query {
+    avos{
+      id
+      image
+      name
+      createdAt
+      sku
+      price
+      attributes {
+        description
+        taste
+        shape
+        hardiness
+      }
+    }
+  }
+`
+
+const baseURL = process.env.NEXT_PUBLIC_SERVICE_URL || 'http://localhost:4000'
+console.log(process.env.NEXT_PUBLIC_SERVICE_URL)
+
+const requester = (endpoint?: string, data?: Record<string, number | string>) =>
+  fetch(`${baseURL}${endpoint}`,{
+    method:'POST',
+    headers: {
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+
+const useAvocados = () => {
+  const [data, setData] = useState<TProduct[]>([])
+  const [status, setStatus] = useState<'success'| 'loading' | 'error' | 'idle'>('idle')
+
+  useEffect(()=>{
+    const fetchItems = async () => {
+      setStatus('loading')
+      try {
+        const response = await requester('/graphql', { query })
+
+        const { data } = (await response.json()) as { data: TProduct[]}
+        setData(data)
+        setStatus('success')
+      } catch (error) {
+        setStatus('error')
+      }
+    }
+    fetchItems()
+  }, [])
+
+  return {
+    data,
+    status
+  }
+
+}
+
 const HomePage = () => {
+  const { data, status } = useAvocados()
+
+  console.log(data)
+
   return (
     <Layout title="Home">
       <KawaiiHeader />
