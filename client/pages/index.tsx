@@ -1,5 +1,5 @@
+import React, { useState } from 'react'
 import { useQuery, gql } from '@apollo/client'
-import React from 'react'
 import Layout from '@components/Layout/Layout'
 import { Card } from 'semantic-ui-react'
 import KawaiiHeader from '@components/KawaiiHeader/KawaiiHeader'
@@ -21,7 +21,7 @@ const avocadoFragment = `
 
 const useAvocados = () => {
   const query = gql`
-    query {
+    query GetAllAvos {
       avos {
         ${avocadoFragment}
       }
@@ -30,7 +30,19 @@ const useAvocados = () => {
   return useQuery(query)
 }
 
+const useAvocado = (id: number | string) => {
+  const query = gql`
+    query GetAvo($avoId: ID!) {
+      avo(id: $avoId) {
+        ${avocadoFragment}
+      }
+    }
+  `
+  return useQuery(query, { variables: { avoId: id} })
+}
+
 const HomePage = () => {
+  const [isEnabled, setIsEnabled] = useState(false)
   const { data, loading } = useAvocados()
 
   console.log({ data, loading })
@@ -38,6 +50,14 @@ const HomePage = () => {
   return (
     <Layout title="Home">
       <KawaiiHeader />
+      <div style={{ margin: '2rem 0' }}>
+        <button
+          onClick={() => setIsEnabled(!isEnabled)}
+        >
+          Fetch child
+        </button>
+        {isEnabled && <ChildComponent />}
+      </div>
       <Card.Group itemsPerRow={2} centered>
         {documentationList.map((doc) => (
           <Card
@@ -51,6 +71,13 @@ const HomePage = () => {
       </Card.Group>
     </Layout>
   )
+}
+
+const ChildComponent = () => {
+  const { data, loading } = useAvocado(1)
+  console.log('Single avocado: ', { data, loading })
+
+  return <p>Mounted</p>
 }
 
 const documentationList = [

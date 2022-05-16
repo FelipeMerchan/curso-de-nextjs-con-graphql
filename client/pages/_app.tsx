@@ -12,7 +12,22 @@ const baseUrl = process.env.NEXT_PUBLIC_SERVICE_URL || 'http://localhost:4000'
   personalizar para que Apollo use Axios o cualquier otra librería */
 const client = new ApolloClient({
   uri: `${baseUrl}/graphql`,
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          avo: {
+            read(_, { args, toReference }) {
+              return toReference({
+                __typename: 'Avocado',
+                id: args?.id,
+              })
+            },
+          },
+        },
+      },
+    },
+  }),
 })
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
