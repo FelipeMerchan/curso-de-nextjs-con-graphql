@@ -3,6 +3,7 @@ import { useQuery, gql } from '@apollo/client'
 import Layout from '@components/Layout/Layout'
 import { Card } from 'semantic-ui-react'
 import KawaiiHeader from '@components/KawaiiHeader/KawaiiHeader'
+import { useGetAllAvosQuery } from '../service/graphql'
 
 const avocadoFragment = `
   id
@@ -42,22 +43,13 @@ const useAvocado = (id: number | string) => {
 }
 
 const HomePage = () => {
-  const [isEnabled, setIsEnabled] = useState(false)
-  const { data, loading } = useAvocados()
+  const { data, loading } = useGetAllAvosQuery()
 
   console.log({ data, loading })
 
   return (
     <Layout title="Home">
       <KawaiiHeader />
-      <div style={{ margin: '2rem 0' }}>
-        <button
-          onClick={() => setIsEnabled(!isEnabled)}
-        >
-          Fetch child
-        </button>
-        {isEnabled && <ChildComponent />}
-      </div>
       <Card.Group itemsPerRow={2} centered>
         {documentationList.map((doc) => (
           <Card
