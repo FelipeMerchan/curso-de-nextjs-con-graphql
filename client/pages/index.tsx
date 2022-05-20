@@ -1,55 +1,20 @@
-import React, { useState } from 'react'
-import { useQuery, gql } from '@apollo/client'
+import React from 'react'
 import Layout from '@components/Layout/Layout'
 import { Card } from 'semantic-ui-react'
 import KawaiiHeader from '@components/KawaiiHeader/KawaiiHeader'
-import { useGetAllAvosQuery } from '../service/graphql'
+import { Avocado, GetAllAvocadosDocument } from '@service/graphql';
+import client from '@service/client'
+import type { GetStaticProps, InferGetStaticPropsType } from 'next'
+import ProductList from '@components/ProductList/ProductList';
 
-const avocadoFragment = `
-  id
-  image
-  name
-  createdAt
-  sku
-  price
-  attributes {
-    description
-    taste
-    shape
-    hardiness
-  }
-`
-
-const useAvocados = () => {
-  const query = gql`
-    query GetAllAvos {
-      avos {
-        ${avocadoFragment}
-      }
-    }
-  `
-  return useQuery(query)
-}
-
-const useAvocado = (id: number | string) => {
-  const query = gql`
-    query GetAvo($avoId: ID!) {
-      avo(id: $avoId) {
-        ${avocadoFragment}
-      }
-    }
-  `
-  return useQuery(query, { variables: { avoId: id} })
-}
-
-const HomePage = () => {
-  const { data, loading } = useGetAllAvosQuery()
-
-  console.log({ data, loading })
+const HomePage = ({ productList }: InferGetStaticPropsType<typeof getStaticProps>) => {
+  /* const { data, loading } = useQuery(GetAllAvocadosDocument)
+  console.log({ data, loading }) */
 
   return (
     <Layout title="Home">
       <KawaiiHeader />
+      <ProductList products={productList} />
       <Card.Group itemsPerRow={2} centered>
         {documentationList.map((doc) => (
           <Card
@@ -65,11 +30,31 @@ const HomePage = () => {
   )
 }
 
-const ChildComponent = () => {
-  const { data, loading } = useAvocado(1)
-  console.log('Single avocado: ', { data, loading })
+export const getStaticProps: GetStaticProps<{ productList: Avocado[] }> = async () => {
+  try {
+    const response = await client.query({
+      query: GetAllAvocadosDocument
+    })
 
-  return <p>Mounted</p>
+    if (response.data.avos === null) {
+      throw new Error('There was an error fetching the items')
+    }
+
+    const productList = response.data.avos as Avocado[]
+
+    return {
+      props: {
+        productList,
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    return {
+      props: {
+        productList: []
+      }
+    }
+  }
 }
 
 const documentationList = [
