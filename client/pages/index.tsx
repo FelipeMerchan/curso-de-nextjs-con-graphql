@@ -33,7 +33,10 @@ const HomePage = ({ productList }: InferGetStaticPropsType<typeof getStaticProps
 export const getStaticProps: GetStaticProps<{ productList: Avocado[] }> = async () => {
   try {
     const response = await client.query({
-      query: GetAllAvocadosDocument
+      query: GetAllAvocadosDocument,
+      // Ignore cache para refrescar por completo nuestro contenido
+      // al fin y al cabo con `revalidate` controlamos la frecuencia
+      fetchPolicy: 'network-only',
     })
 
     if (response.data.avos === null) {
@@ -45,14 +48,16 @@ export const getStaticProps: GetStaticProps<{ productList: Avocado[] }> = async 
     return {
       props: {
         productList,
-      }
+      },
+      // Next.js intentará re generar la página cuando:
+      // - Se visite esta página
+      // - Pasen al menos 5 minutos.
+      revalidate: 5 * 60,
     }
   } catch (error) {
     console.error(error)
     return {
-      props: {
-        productList: []
-      }
+      notFound: true,
     }
   }
 }
