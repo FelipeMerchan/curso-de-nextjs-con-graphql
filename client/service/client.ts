@@ -1,12 +1,32 @@
-import { ApolloClient, InMemoryCache } from '@apollo/client'
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
+import { retrieveToken } from '@service/auth'
+import { baseUrl } from './config'
 
-const baseUrl = process.env.NEXT_PUBLIC_SERVICE_URL || 'http://localhost:4000'
-
-/* Apollo se encarga de hacer el requester al momento en que
-  creamos el cliente, por defecto usa fetch API. Esto se puede
-  personalizar para que Apollo use Axios o cualquier otra librería */
-const client = new ApolloClient({
+const apiLink = createHttpLink({
   uri: `${baseUrl}/graphql`,
+})
+
+const authLink = setContext(async (_, { headers }) => {
+  let extraHeader: Record<string, string> = {}
+
+  if (typeof window !== 'undefined') {
+    const token = await retrieveToken()
+    extraHeader = {
+      Authorization: `Bearer ${token}`,
+    }
+  }
+
+  return {
+    headers: {
+      ...headers,
+      ...extraHeader,
+    },
+  }
+})
+
+const client = new ApolloClient({
+  link: authLink.concat(apiLink),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
